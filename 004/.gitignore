@@ -1,0 +1,5 @@
+assets/*.gz
+assets/*.zip
+assets/forensics/
+artifacts/
+.state/

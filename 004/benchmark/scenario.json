@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "gym_id": "004",
+  "title": "GroundLink cloud intrusion",
+  "implementation_stage": "evidence-loading",
+  "mode": "recorded-evidence-investigation",
+  "evidence": {
+    "format": "gzipped native AWS CloudTrail JSON envelope",
+    "record_count": 211,
+    "source": "operator-supplied",
+    "normalization_version": "cloudtrail-query-v1",
+    "source_object_key": "gym-004/source/groundlink.json.gz",
+    "query_object_key": "gym-004/normalized/cloudtrail-v1.jsonl.gz",
+    "manifest_object_key": "gym-004/manifest.json"
+  },
+  "services": ["tracecat", "minio"],
+  "planned_query_action": "core.duckdb.execute_sql",
+  "planned_entry_point": "Suspicious IAM role trust-policy change",
+  "limitations": [
+    "Incident case and analyst/workflow reconciliation are not implemented yet.",
+    "The gym does not execute attacks or containment against AWS."
+  ]
+}

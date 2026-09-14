@@ -1,0 +1,50 @@
+x-tracecat-enterprise: &tracecat-enterprise
+  ENTERPRISE_EDITION: "true"
+  TRACECAT__EE_MULTI_TENANT: "true"
+  TRACECAT__FEATURE_FLAGS: agent-channels,agent-fs-persistence,ai-ranking,workflow-concurrency-limits
+
+services:
+  dataset-seed:
+    image: ${GYM_CONTROL_IMAGE:?missing Gym 004 control image}
+    profiles: [bootstrap]
+    restart: "no"
+    networks: [core]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      GROUNDLINK_BUCKET: ${GROUNDLINK_BUCKET:-groundlink}
+      GROUNDLINK_ENDPOINT: ${GROUNDLINK_ENDPOINT:-minio:9000}
+      GROUNDLINK_CORPUS: /run/gym-data/groundlink.json.gz
+    volumes:
+      - type: bind
+        source: ${GROUNDLINK_CORPUS:-./assets/groundlink.json.gz}
+        target: /run/gym-data/groundlink.json.gz
+        read_only: true
+        bind: {create_host_path: false}
+    command: [internal-seed-dataset]
+    depends_on:
+      minio: {condition: service_healthy}
+
+  tracecat-seed:
+    image: ${GYM_CONTROL_IMAGE:?missing Gym 004 control image}
+    profiles: [bootstrap]
+    restart: "no"
+    networks: [core-db]
+    environment:
+      <<: *tracecat-enterprise
+      TRACECAT__DB_URI: ${TRACECAT__DB_URI}
+      TRACECAT__DB_SSLMODE: ${TRACECAT__DB_SSLMODE}
+      TRACECAT__DB_ENCRYPTION_KEY: ${TRACECAT__DB_ENCRYPTION_KEY}
+      TRACECAT__SERVICE_KEY: ${TRACECAT__SERVICE_KEY}
+      TRACECAT__SIGNING_SECRET: ${TRACECAT__SIGNING_SECRET}
+      USER_AUTH_SECRET: ${USER_AUTH_SECRET}
+      TRACECAT__DEV_USER_EMAIL: ${TRACEcat_TENANT_EMAIL}
+      TRACECAT__DEV_USER_PASSWORD: ${TRACEcat_TENANT_PASSWORD}
+      TRACECAT__DEV_SUPERUSER_EMAIL: ${TRACEcat_SUPERADMIN_EMAIL}
+      TRACECAT__DEV_SUPERUSER_PASSWORD: ${TRACEcat_SUPERADMIN_PASSWORD}
+      TRACECAT__DEV_DEFAULT_TIER_ENTITLEMENTS: all
+      TRACECAT__DEV_ORG_ROLE: organization-owner
+      TRACECAT__DEV_WORKSPACE_ROLE: workspace-admin
+    command: [seed]
+    depends_on:
+      migrations: {condition: service_completed_successfully}

@@ -1,0 +1,15 @@
+*
+!src/
+!src/**
+!benchmark/
+!benchmark/**
+!gym.lock.json
+!images/
+!images/control/
+!images/control/Dockerfile
+
+# Source evidence and generated state must never enter image layers.
+assets/
+artifacts/
+**/__pycache__
+**/*.pyc
