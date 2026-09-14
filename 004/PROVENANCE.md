@@ -7,6 +7,7 @@
 | `artifacts/evidence/`, MinIO `gym-004/normalized/` | `generated-derived` | Deterministic query projection preserves complete events, adds uniform query fields and source references; generated data not committed. |
 | MinIO `gym-004/source/` | `upstream-verbatim` | Exact operator-supplied source bytes, uploaded only after checksum validation. |
 | `benchmark/scenario.json` | `gym-owned` | Investigation scope and implementation status; contains no CTF questions or answers. |
+| `artifacts/alert-case.json`, Tracecat case | `generated-derived` | Locally authored detection selects one observed trust-policy event and links to the evidence. Generated payload not committed; not an upstream GuardDuty finding. |
 | `src/gym_plugin/`, `images/`, `compose.override.yml`, `Justfile` | `gym-owned` | Gym 004 configuration and lifecycle; follows Gym 002's shared-platform integration patterns. |
 | `../src/gymctl/`, `../compose/`, `../config/` | `gym-owned-shared` | Existing platform, bootstrap, and lifecycle helpers reused without modification. |
 | `gym.lock.json` MinIO image | `official-registry-mirror` | Quay serves the exact SHA-256 already pinned by the shared platform. Gym 004 uses this official mirror because Docker Hub refused the pinned pull; shared platform pins remain unchanged. |

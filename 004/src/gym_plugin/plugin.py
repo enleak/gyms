@@ -1,4 +1,4 @@
-"""Bind the shared command surface to Gym 004's evidence-loading stage."""
+"""Bind the shared command surface to Gym 004's incident-case stage."""
 
 from __future__ import annotations
 
@@ -12,6 +12,10 @@ def dispatch(args):
         from .dataset import audit
 
         return audit()
+    if args.command in ("internal-reconcile", "internal-test-api"):
+        from .reconcile import main
+
+        return main(read_only=args.command == "internal-test-api")
     if args.command == "seed":
         from gymctl.seed import main
 
@@ -46,5 +50,5 @@ def dispatch(args):
     elif args.command in ("init", "doctor", "up", "wait", "info", "status", "down", "reconcile"):
         getattr(host, args.command)()
     else:
-        raise ValueError(f"Gym 004 does not support {args.command} at the evidence-loading stage")
+        raise ValueError(f"Gym 004 does not support {args.command} at the incident-case stage")
     return 0

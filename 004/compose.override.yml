@@ -15,7 +15,7 @@ services:
       GROUNDLINK_BUCKET: ${GROUNDLINK_BUCKET:-groundlink}
       GROUNDLINK_ENDPOINT: ${GROUNDLINK_ENDPOINT:-minio:9000}
       GROUNDLINK_CORPUS: /run/gym-data/groundlink.json.gz
-    volumes:
+    volumes: &groundlink-evidence
       - type: bind
         source: ${GROUNDLINK_CORPUS:-./assets/groundlink.json.gz}
         target: /run/gym-data/groundlink.json.gz
@@ -48,3 +48,23 @@ services:
     command: [seed]
     depends_on:
       migrations: {condition: service_completed_successfully}
+
+  gym-reconciler:
+    image: ${GYM_CONTROL_IMAGE:?missing Gym 004 control image}
+    profiles: [bootstrap]
+    restart: "no"
+    networks: [core]
+    environment:
+      <<: *tracecat-enterprise
+      TRACEcat_INTERNAL_API_URL: http://api:8000
+      TRACEcat_TENANT_EMAIL: ${TRACEcat_TENANT_EMAIL}
+      TRACEcat_TENANT_PASSWORD: ${TRACEcat_TENANT_PASSWORD}
+      GROUNDLINK_BUCKET: ${GROUNDLINK_BUCKET:-groundlink}
+      GROUNDLINK_ENDPOINT: ${GROUNDLINK_ENDPOINT:-minio:9000}
+      GROUNDLINK_CORPUS: /run/gym-data/groundlink.json.gz
+    volumes: *groundlink-evidence
+    command: [internal-reconcile, reconcile]
+    depends_on:
+      api: {condition: service_healthy}
+      dataset-seed: {condition: service_completed_successfully}
+      tracecat-seed: {condition: service_completed_successfully}

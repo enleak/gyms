@@ -31,8 +31,14 @@ reconcile:
 prepare-evidence:
     @PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=../src:src python3 -m gym_plugin.dataset --prepare
 
+prepare-case:
+    @PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=../src:src python3 -m gym_plugin.alert
+
 check:
     @{{gymctl}} check
+
+test:
+    @PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=../src:src python3 -m unittest discover -s tests -v
 
 logs service="":
     @{{gymctl}} logs {{service}}

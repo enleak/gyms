@@ -16,7 +16,9 @@ workbench files, and logos are not inputs to this gym.
 `just prepare-evidence` validates and generates the three storage objects under
 the ignored `artifacts/evidence/` directory without Docker. `just up` validates
 the source and seeds those same objects into MinIO. `just reconcile` rechecks
-and repairs the objects against an already-running MinIO service.
+and repairs the objects on an already-running Tracecat platform, then ensures
+the derived incident case exists. `just prepare-case` writes the ignored local
+case payload for review without contacting Tracecat.
 
 MinIO stores the unchanged original corpus, normalized gzip JSONL, and a
 manifest of their checksums under its `gym-004/` prefix. The native event ID,

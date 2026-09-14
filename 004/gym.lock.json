@@ -38,7 +38,7 @@
       "control": {
         "classification": "gym-owned",
         "repository": "tracecat-gyms/gym-004-control",
-        "input_sha256": "b9bf3a582234151ba28103b71b42b9a82702110213f67403dd6fb3e4fc49d59a"
+        "input_sha256": "cff629e5bdf26f531ec15597f4f4cfa8f6c4b296f26601c5ad0905a89a941368"
       }
     }
   }

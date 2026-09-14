@@ -7,7 +7,7 @@ ARG TRACECAT_VERSION
 ARG GYM_COMPONENT_VERSION
 
 LABEL org.opencontainers.image.title="Tracecat Gym 004 control plane" \
-      org.opencontainers.image.description="Platform bootstrap and evidence seeding for the GroundLink cloud intrusion gym" \
+      org.opencontainers.image.description="Platform bootstrap, evidence seeding and incident case setup for the GroundLink cloud intrusion gym" \
       org.opencontainers.image.source="https://github.com/TracecatHQ/gyms" \
       org.opencontainers.image.revision="${GYM_REVISION}" \
       org.opencontainers.image.version="${GYM_COMPONENT_VERSION}" \

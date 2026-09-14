@@ -2,7 +2,7 @@
   "schema_version": 1,
   "gym_id": "004",
   "title": "GroundLink cloud intrusion",
-  "implementation_stage": "evidence-loading",
+  "implementation_stage": "incident-case",
   "mode": "recorded-evidence-investigation",
   "evidence": {
     "format": "gzipped native AWS CloudTrail JSON envelope",
@@ -16,8 +16,15 @@
   "services": ["tracecat", "minio"],
   "planned_query_action": "core.duckdb.execute_sql",
   "planned_entry_point": "Suspicious IAM role trust-policy change",
+  "case_entry_point": {
+    "rule_id": "gym-004-cloudtrail-groundlink-caller-trust-v1",
+    "role_name_prefix": "groundlink-",
+    "selection": "earliest successful UpdateAssumeRolePolicy for a GroundLink role explicitly allowing unconditional sts:AssumeRole by the calling IAM role",
+    "detection_source": "gym-derived-cloudtrail",
+    "case_count": 1
+  },
   "limitations": [
-    "Incident case and analyst/workflow reconciliation are not implemented yet.",
+    "Analyst preset and intake/investigation workflows are not implemented yet.",
     "The gym does not execute attacks or containment against AWS."
   ]
 }

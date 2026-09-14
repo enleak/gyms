@@ -99,18 +99,35 @@ def up() -> None:
     config.run_compose("up", "--detach")
     lifecycle.run_bootstrap(config.DEFINITION, config.run_compose, "dataset-seed", timeout=600)
     lifecycle.run_bootstrap(config.DEFINITION, config.run_compose, "tracecat-seed", timeout=600)
-    log("Platform initialized and evidence seeded. Incident setup will be added in the next stages.")
+    bootstrap_case()
+    log("Platform, evidence and incident case initialized. Automated investigation is a subsequent stage.")
     info()
 
 
 def reconcile() -> None:
-    """Re-seed immutable evidence; case/workflow setup is a subsequent stage."""
+    """Re-seed evidence and ensure one incident case, preserving existing work."""
     from .dataset import validate_corpus
 
     validate_corpus()
     build()
+    lifecycle.wait_runtime_health(
+        config.DEFINITION, config.run_compose, ("api", "minio"), timeout=600,
+        on_change=lambda states: log(f"waiting for case setup services: {states}"),
+    )
     lifecycle.run_bootstrap(config.DEFINITION, config.run_compose, "dataset-seed", timeout=600)
-    log("Evidence reconciled; case/workflow setup is not implemented yet.")
+    lifecycle.run_bootstrap(config.DEFINITION, config.run_compose, "tracecat-seed", timeout=600)
+    bootstrap_case()
+    log("Evidence and incident case reconciled; existing investigation work retained.")
+
+
+def bootstrap_case() -> None:
+    # Bootstrap containers use --no-deps; explicitly wait for the API before
+    # making case requests, including after a VM/platform restart.
+    lifecycle.wait_runtime_health(
+        config.DEFINITION, config.run_compose, ("api", "minio"), timeout=600,
+        on_change=lambda states: log(f"waiting for incident case services: {states}"),
+    )
+    lifecycle.run_bootstrap(config.DEFINITION, config.run_compose, "gym-reconciler", timeout=600)
 
 
 def wait() -> None:
@@ -118,11 +135,13 @@ def wait() -> None:
         raise lifecycle.LifecycleError("platform bootstrap has not run; run just up")
     lifecycle.wait_exit(config.DEFINITION, config.run_compose, "tracecat-seed", timeout=600)
     lifecycle.wait_exit(config.DEFINITION, config.run_compose, "dataset-seed", timeout=600)
+    lifecycle.wait_exit(config.DEFINITION, config.run_compose, "gym-reconciler", timeout=600)
     lifecycle.wait_runtime_health(
         config.DEFINITION, config.run_compose, HEALTH_SERVICES, timeout=600,
         on_change=lambda states: log(f"waiting for platform health: {states}"),
     )
-    log("Shared platform and evidence bootstrap are ready; incident setup is not implemented yet.")
+    status()
+    log("Platform, evidence and incident case are ready; automated investigation is not implemented yet.")
 
 
 def info() -> None:
@@ -138,7 +157,13 @@ def status() -> None:
     config.run_compose("--profile", "bootstrap", "ps", "--all")
     if not lifecycle.container_id(config.run_compose, "api"):
         raise lifecycle.LifecycleError("Gym 004 is not running")
-    log("Implementation stage: evidence loading; GroundLink case/workflows are not implemented yet.")
+    from gymctl.http import Client
+    from . import reconcile as state
+
+    env = config.parse_env()
+    with Client(base_url=env["PUBLIC_API_URL"], timeout=120) as client:
+        state.status(client, env["TRACEcat_TENANT_EMAIL"], env["TRACEcat_TENANT_PASSWORD"])
+    log("Implementation stage: incident case; analyst preset and workflows are not implemented yet.")
 
 
 def logs(service: str | None) -> None:

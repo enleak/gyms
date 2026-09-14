@@ -9,6 +9,7 @@ import shutil
 
 from . import config
 from .dataset import EVENTS_KEY, MANIFEST_KEY, NORMALIZATION_VERSION, SOURCE_KEY, prepare_objects
+from .alert import ROLE_NAME_PREFIX, RULE_ID, source_case
 
 
 def validate() -> None:
@@ -27,7 +28,7 @@ def validate() -> None:
     for path in (config.ROOT / "src").rglob("*.py"):
         ast.parse(path.read_text(), filename=str(path))
     scenario = json.loads((config.ROOT / "benchmark/scenario.json").read_text())
-    if scenario["gym_id"] != "004" or scenario["implementation_stage"] != "evidence-loading":
+    if scenario["gym_id"] != "004" or scenario["implementation_stage"] != "incident-case":
         raise ValueError("scenario identity mismatch")
     objects = prepare_objects()
     if scenario["evidence"]["normalization_version"] != NORMALIZATION_VERSION:
@@ -39,6 +40,14 @@ def validate() -> None:
         if scenario["evidence"][field] != key:
             raise ValueError(f"scenario evidence key drifted: {field}")
     print(f"[gym-004] Evidence validated: {len(objects)} deterministic objects, 211 records.")
+    desired = source_case()
+    if scenario["case_entry_point"]["rule_id"] != RULE_ID or scenario["case_entry_point"]["case_count"] != 1:
+        raise ValueError("scenario case entry point drifted")
+    if scenario["case_entry_point"]["role_name_prefix"] != ROLE_NAME_PREFIX:
+        raise ValueError("scenario monitored role prefix drifted")
+    if desired["payload"]["source_sha256"] != json.loads(objects[MANIFEST_KEY])["source"]["sha256"]:
+        raise ValueError("derived alert refers to a different corpus")
+    print("[gym-004] Derived alert validated against the source corpus.")
     if (config.ROOT / "benchmark/evals").exists():
         raise ValueError("Gym 004 does not include evaluation or grading components")
     print("[gym-004] Repository integrity passed.")
@@ -56,6 +65,10 @@ def validate() -> None:
         raise ValueError("dataset seed process reads a different path from its mounted corpus")
     if services["dataset-seed"]["image"] != config.local_image():
         raise ValueError("dataset seed image is not the deterministic control image")
+    if services["gym-reconciler"]["volumes"] != mount:
+        raise ValueError("case reconciler must read the same immutable corpus as the dataset seed")
+    if services["gym-reconciler"]["environment"]["GROUNDLINK_CORPUS"] != mount[0]["target"]:
+        raise ValueError("case reconciler corpus path drifted")
     if services["minio"].get("ports"):
         raise ValueError("MinIO must remain on the private Docker network")
     probe = config.run_compose("ps", "--quiet", "api", check=False, capture=True)
@@ -78,6 +91,10 @@ def validate() -> None:
             if state != "running healthy":
                 raise ValueError(f"{service} is not healthy: {state}")
         print("[gym-004] Live platform health checks passed.")
+        config.run_compose(
+            "--profile", "bootstrap", "run", "--rm", "--no-deps", "--pull", "never",
+            "gym-reconciler", "internal-test-api",
+        )
     minio = config.run_compose("ps", "--quiet", "minio", check=False, capture=True)
     if minio.stdout.strip():
         config.run_compose(
